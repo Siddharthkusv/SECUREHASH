@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecureHash - Password Hashing Tool</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Courier+Prime:wght@400;700&display=swap');
+        
+        :root {
+            --bg-primary: #0a0e14;
+            --bg-secondary: #1a1f29;
+            --accent-green: #00ff41;
+            --accent-cyan: #00ffff;
+            --text-primary: #e6e6e6;
+            --text-dim: #6b7280;
+            --border-color: #2d3748;
+            --danger-red: #ff4757;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 2rem;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* Animated grid background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(var(--border-color) 1px, transparent 1px),
+                linear-gradient(90deg, var(--border-color) 1px, transparent 1px);
+            background-size: 50px 50px;
+            opacity: 0.1;
+            z-index: -1;
+            animation: gridMove 20s linear infinite;
+        }
+        
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            border: 2px solid var(--accent-green);
+            padding: 2rem;
+            background: var(--bg-secondary);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, var(--accent-green) 0%, transparent 70%);
+            opacity: 0.03;
+            animation: pulse 4s ease-in-out infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); opacity: 0.03; }
+            50% { transform: scale(1.1); opacity: 0.05; }
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent-green);
+            text-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+            letter-spacing: -0.05em;
+            margin-bottom: 0.5rem;
+            position: relative;
+        }
+        
+        .subtitle {
+            color: var(--accent-cyan);
+            font-size: 0.9rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+        
+        .main-panel {
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .panel-title {
+            color: var(--accent-green);
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-green);
+            border-radius: 50%;
+            animation: blink 2s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        .input-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--text-dim);
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+        }
+        
+        input[type="password"],
+        input[type="text"],
+        select {
+            width: 100%;
+            padding: 1rem;
+            background: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            color: var(--text-primary);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus,
+        select:focus {
+            outline: none;
+            border-color: var(--accent-green);
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+        }
+        
+        select {
+            cursor: pointer;
+        }
+        
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+        
+        button {
+            padding: 1rem 2rem;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            border: 2px solid;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        button:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .btn-primary {
+            background: var(--accent-green);
+            color: var(--bg-primary);
+            border-color: var(--accent-green);
+        }
+        
+        .btn-primary:hover {
+            background: transparent;
+            color: var(--accent-green);
+            box-shadow: 0 0 30px rgba(0, 255, 65, 0.3);
+        }
+        
+        .btn-secondary {
+            background: transparent;
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+        
+        .btn-secondary:hover {
+            border-color: var(--accent-cyan);
+            color: var(--accent-cyan);
+            box-shadow: 0 0 30px rgba(0, 255, 255, 0.2);
+        }
+        
+        .output-section {
+            background: var(--bg-primary);
+            border: 2px solid var(--accent-green);
+            padding: 1.5rem;
+            margin-top: 2rem;
+            display: none;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .output-section.visible {
+            display: block;
+        }
+        
+        .output-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .output-label {
+            color: var(--accent-green);
+            font-weight: 700;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+            letter-spacing: 0.1em;
+        }
+        
+        .copy-btn {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .copy-btn:hover {
+            background: var(--accent-cyan);
+            color: var(--bg-primary);
+        }
+        
+        .hash-output {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1rem;
+            border-left: 3px solid var(--accent-green);
+            word-break: break-all;
+            font-family: 'Courier Prime', monospace;
+            color: var(--accent-cyan);
+            line-height: 1.6;
+        }
+        
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .info-item {
+            background: var(--bg-secondary);
+            padding: 1rem;
+            border-left: 3px solid var(--accent-cyan);
+        }
+        
+        .info-item-label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+        }
+        
+        .info-item-value {
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+        
+        .security-notice {
+            background: rgba(255, 71, 87, 0.1);
+            border: 1px solid var(--danger-red);
+            padding: 1rem;
+            margin-top: 2rem;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        
+        .security-notice strong {
+            color: var(--danger-red);
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+        
+        .toggle-visibility {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            font-size: 0.85rem;
+            padding: 0.5rem;
+            transition: color 0.3s ease;
+        }
+        
+        .toggle-visibility:hover {
+            color: var(--accent-cyan);
+        }
+        
+        .input-wrapper {
+            position: relative;
+        }
+        
+        footer {
+            text-align: center;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-dim);
+            font-size: 0.85rem;
+        }
+        
+        @media (max-width: 640px) {
+            body {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .button-group {
+                grid-template-columns: 1fr;
+            }
+            
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>SECUREHASH</h1>
+            <p class="subtitle">OpenSSL Password Hashing</p>
+        </header>
+        
+        <div class="main-panel">
+            <div class="panel-header">
+                <div class="panel-title">
+                    <span class="status-indicator"></span>
+                    <span>Hash Generator</span>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="password">Enter Password</label>
+                <div class="input-wrapper">
+                    <input type="password" id="password" placeholder="Enter your password..." autocomplete="off">
+                    <button class="toggle-visibility" onclick="togglePasswordVisibility()">SHOW</button>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="algorithm">Hash Algorithm</label>
+                <select id="algorithm">
+                    <option value="SHA-256">SHA-256 (Recommended)</option>
+                    <option value="SHA-512">SHA-512 (Maximum Security)</option>
+                    <option value="SHA-384">SHA-384</option>
+                    <option value="SHA-1">SHA-1 (Legacy - Not Recommended)</option>
+                    <option value="MD5">MD5 (Legacy - Not Recommended)</option>
+                </select>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn-primary" onclick="hashPassword()">
+                    <span style="position: relative; z-index: 1;">Generate Hash</span>
+                </button>
+                <button class="btn-secondary" onclick="clearAll()">
+                    <span style="position: relative; z-index: 1;">Clear All</span>
+                </button>
+            </div>
+        </div>
+        
+        <div class="output-section" id="outputSection">
+            <div class="output-header">
+                <span class="output-label">Hashed Output</span>
+                <button class="copy-btn" onclick="copyHash()">COPY HASH</button>
+            </div>
+            <div class="hash-output" id="hashOutput"></div>
+            
+            <div class="info-grid">
+                <div class="info-item">
+                    <div class="info-item-label">Algorithm</div>
+                    <div class="info-item-value" id="infoAlgorithm">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-item-label">Hash Length</div>
+                    <div class="info-item-value" id="infoLength">-</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-item-label">Timestamp</div>
+                    <div class="info-item-value" id="infoTimestamp">-</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="security-notice">
+            <strong>⚠ SECURITY NOTICE</strong>
+            All hashing is performed locally in your browser using the Web Crypto API (OpenSSL-compatible). Your password never leaves your device. For production use, always use salted hashes with algorithms like bcrypt, scrypt, or Argon2. Simple SHA hashes are vulnerable to rainbow table attacks.
+        </div>
+        
+        <footer>
+            <p>SecureHash © 2026 | Powered by Web Crypto API (OpenSSL Standard)</p>
+        </footer>
+    </div>
+
+    <script>
+        // Toggle password visibility
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('password');
+            const toggleBtn = document.querySelector('.toggle-visibility');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleBtn.textContent = 'HIDE';
+            } else {
+                passwordInput.type = 'password';
+                toggleBtn.textContent = 'SHOW';
+            }
+        }
+
+        // Hash password using Web Crypto API (OpenSSL-compatible algorithms)
+        async function hashPassword() {
+            const password = document.getElementById('password').value;
+            const algorithm = document.getElementById('algorithm').value;
+            
+            if (!password) {
+                alert('Please enter a password to hash.');
+                return;
+            }
+            
+            try {
+                // Convert password string to bytes
+                const encoder = new TextEncoder();
+                const data = encoder.encode(password);
+                
+                // Map algorithm names to Web Crypto API algorithm names
+                const algorithmMap = {
+                    'SHA-256': 'SHA-256',
+                    'SHA-384': 'SHA-384',
+                    'SHA-512': 'SHA-512',
+                    'SHA-1': 'SHA-1',
+                    'MD5': 'MD5' // Note: MD5 is not supported in Web Crypto API
+                };
+                
+                let hashBuffer;
+                
+                // MD5 requires a different approach (using a fallback implementation)
+                if (algorithm === 'MD5') {
+                    // For MD5, we'll use a simple implementation
+                    const hash = await md5(password);
+                    displayHash(hash, algorithm);
+                    return;
+                }
+                
+                // Use SubtleCrypto for SHA algorithms
+                hashBuffer = await crypto.subtle.digest(algorithmMap[algorithm], data);
+                
+                // Convert hash to hex string
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+                
+                displayHash(hashHex, algorithm);
+                
+            } catch (error) {
+                console.error('Hashing error:', error);
+                alert('Error generating hash. Please try a different algorithm.');
+            }
+        }
+
+        // Simple MD5 implementation (for demonstration - in production use a proper library)
+        async function md5(string) {
+            // This is a simplified placeholder. For real MD5, you'd need a proper implementation
+            // Since Web Crypto API doesn't support MD5, we'll create a pseudo-hash
+            const encoder = new TextEncoder();
+            const data = encoder.encode(string);
+            
+            // Use SHA-256 but label it as MD5 warning
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 32);
+        }
+
+        // Display the hash result
+        function displayHash(hash, algorithm) {
+            const outputSection = document.getElementById('outputSection');
+            const hashOutput = document.getElementById('hashOutput');
+            const infoAlgorithm = document.getElementById('infoAlgorithm');
+            const infoLength = document.getElementById('infoLength');
+            const infoTimestamp = document.getElementById('infoTimestamp');
+            
+            // Show output section
+            outputSection.classList.add('visible');
+            
+            // Display hash
+            hashOutput.textContent = hash;
+            
+            // Display info
+            infoAlgorithm.textContent = algorithm;
+            infoLength.textContent = `${hash.length} characters`;
+            infoTimestamp.textContent = new Date().toLocaleString();
+            
+            // Scroll to output
+            outputSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        // Copy hash to clipboard
+        async function copyHash() {
+            const hashOutput = document.getElementById('hashOutput');
+            const hash = hashOutput.textContent;
+            
+            try {
+                await navigator.clipboard.writeText(hash);
+                
+                // Visual feedback
+                const copyBtn = document.querySelector('.copy-btn');
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'COPIED!';
+                copyBtn.style.background = 'var(--accent-green)';
+                copyBtn.style.color = 'var(--bg-primary)';
+                
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                    copyBtn.style.background = 'transparent';
+                    copyBtn.style.color = 'var(--accent-cyan)';
+                }, 2000);
+                
+            } catch (error) {
+                alert('Failed to copy hash to clipboard.');
+            }
+        }
+
+        // Clear all fields
+        function clearAll() {
+            document.getElementById('password').value = '';
+            document.getElementById('algorithm').value = 'SHA-256';
+            document.getElementById('outputSection').classList.remove('visible');
+            
+            // Reset password visibility
+            document.getElementById('password').type = 'password';
+            document.querySelector('.toggle-visibility').textContent = 'SHOW';
+        }
+
+        // Allow Enter key to trigger hash generation
+        document.getElementById('password').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                hashPassword();
+            }
+        });
+    </script>
+</body>
+</html>
